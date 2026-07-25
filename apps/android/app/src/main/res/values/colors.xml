@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0C0F0D</color>
+    <color name="bg_elevated">#141A16</color>
+    <color name="fg">#EEF1EB</color>
+    <color name="fg_muted">#9AA396</color>
+    <color name="accent">#D4B483</color>
+    <color name="accent_strong">#E8C99A</color>
+    <color name="on_accent">#1A140C</color>
+    <color name="danger_bg">#593825</color>
+    <color name="ic_launcher_background">#141A16</color>
+</resources>

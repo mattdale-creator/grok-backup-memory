@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Grok Backup Memory</string>
+    <string name="brand_short">Grok Memory</string>
+    <string name="import_action">Import</string>
+    <string name="library_action">Library</string>
+    <string name="settings_action">Settings</string>
+    <string name="first_run_title">Grok Backup Memory</string>
+    <string name="first_run_body">Import a file, or open your library.</string>
+    <string name="offline_message">Can’t reach Grok Memory right now. Check the web address in settings, or open the site in your browser.</string>
+    <string name="privacy_note">Your data stays on this device in v1.</string>
+    <string name="web_base_url_label">Web app address</string>
+    <string name="save">Save</string>
+    <string name="shared_file_hint">Shared file ready — use Import on the web page to choose it from Downloads if needed.</string>
+</resources>

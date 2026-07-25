@@ -1,0 +1,24 @@
+{
+  "name": "grok-backup-memory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grok Backup Memory — keep your Grok conversations beautifully, legally, on your terms.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @grok-memory/web",
+    "build": "npm run build -w @grok-memory/core && npm run build -w @grok-memory/web",
+    "build:core": "npm run build -w @grok-memory/core",
+    "build:web": "npm run build -w @grok-memory/web",
+    "test": "npm run test -w @grok-memory/core",
+    "lint": "npm run lint -w @grok-memory/web",
+    "start": "npm run start -w @grok-memory/web"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "author": "Grok Backup Memory"
+}

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Gradle start script (requires gradle wrapper jar — run Android Studio first sync to generate, or install gradle)
+DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ ! -f "$DIR/gradle/wrapper/gradle-wrapper.jar" ]; then
+  echo "Missing gradle-wrapper.jar. Open this folder in Android Studio once to generate the wrapper, or run: gradle wrapper"
+  exit 1
+fi
+exec java -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"

@@ -1,0 +1,36 @@
+node_modules/
+dist/
+.next/
+out/
+.turbo/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Local private exports — never commit real account data
+fixtures/my-*
+fixtures/private/
+fixtures/*-real.*
+*.personal.json
+*.personal.zip
+
+# Native build outputs
+apps/ios/build/
+apps/ios/DerivedData/
+apps/ios/**/*.xcuserstate
+apps/ios/**/xcuserdata/
+apps/android/.gradle/
+apps/android/**/build/
+apps/android/local.properties
+apps/android/.idea/
+*.apk
+*.aab
+*.ipa
+
+# IDE
+.idea/
+.vscode/
+*.swp

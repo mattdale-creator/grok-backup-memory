@@ -1,0 +1,131 @@
+{
+  "export_version": "1.0",
+  "exported_at": "2026-07-27T12:00:00.000Z",
+  "source": "grok-backup-memory-fixture-week2",
+  "conversations": [
+    {
+      "id": "conv-aurora-001",
+      "title": "Planning a calm reading nook",
+      "created_at": "2026-07-10T09:15:00.000Z",
+      "updated_at": "2026-07-10T09:22:00.000Z",
+      "messages": [
+        {
+          "id": "msg-a1",
+          "role": "user",
+          "content": "I want a cozy reading corner in a small apartment. Soft light, not cluttered. Any ideas?",
+          "created_at": "2026-07-10T09:15:00.000Z"
+        },
+        {
+          "id": "msg-a2",
+          "role": "assistant",
+          "content": "Start with one chair you already love, a warm lamp at eye height, and a single small shelf for the books you're reading now. Leave the rest of the wall empty so the corner feels intentional, not busy.",
+          "created_at": "2026-07-10T09:15:20.000Z",
+          "thinking_trace": "User wants calm, small-space, low-clutter advice. Prefer specific, gentle steps over a long shopping list.",
+          "agent_thinking_traces": [
+            {
+              "text": "Prioritize items they may already own. Avoid maxed-out aesthetic checklists."
+            }
+          ]
+        },
+        {
+          "id": "msg-a3",
+          "role": "user",
+          "content": "What about noise from the street?",
+          "created_at": "2026-07-10T09:18:00.000Z"
+        },
+        {
+          "id": "msg-a4",
+          "role": "assistant",
+          "content": "A soft rug plus a light curtain layer can take the edge off street noise without sealing the room. If you like ambient sound, a quiet fan or gentle playlist works better than fighting every decibel.",
+          "created_at": "2026-07-10T09:18:25.000Z",
+          "thinking_trace": "Noise question — practical, affordable options; keep tone at ease."
+        }
+      ]
+    },
+    {
+      "id": "conv-travel-002",
+      "title": "Weekend walk in Lisbon",
+      "created_at": "2026-07-12T14:00:00.000Z",
+      "updated_at": "2026-07-12T15:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-b1",
+          "role": "user",
+          "content": "Map a gentle half-day walk in Lisbon for someone who dislikes steep hills.",
+          "timestamp": "2026-07-12T14:00:00.000Z"
+        },
+        {
+          "id": "msg-b2",
+          "role": "assistant",
+          "content": "Begin by the river near Cais do Sodré, stroll the flat waterfront toward Belém if energy allows, and pause at a café whenever you want. Skip Alfama's stairs on a low-energy day — the light along the Tagus is the treat.\n\nUpdated tip: the riverside bike path is also walkable and stays mostly level.",
+          "timestamp": "2026-07-12T14:00:30.000Z",
+          "thinking_trace": "User may re-export; content slightly updated for week-2 fixture.",
+          "steps": [
+            {
+              "id": "step-1",
+              "name": "web_search",
+              "status": "completed",
+              "input": "Lisbon flat walk waterfront",
+              "output": "Cais do Sodré to Belém waterfront is relatively gentle."
+            }
+          ]
+        },
+        {
+          "id": "msg-b3",
+          "role": "user",
+          "content": "Any good pastry stop that is not a long queue?",
+          "timestamp": "2026-07-12T14:50:00.000Z"
+        },
+        {
+          "id": "msg-b4",
+          "role": "assistant",
+          "content": "Try a neighborhood pastelaria a block off the main tourist strip — slightly less famous, usually calmer, still excellent.",
+          "timestamp": "2026-07-12T14:50:20.000Z",
+          "thinking_trace": "Keep recommendation gentle; avoid named chain hype."
+        }
+      ]
+    },
+    {
+      "id": "conv-code-003",
+      "title": "Tiny TypeScript helper",
+      "created_at": "2026-07-15T18:30:00.000Z",
+      "updated_at": "2026-07-15T18:35:00.000Z",
+      "responses": [
+        {
+          "id": "msg-c1",
+          "sender": "user",
+          "text": "Write a tiny function that slugifies a title for filenames.",
+          "created_at": "2026-07-15T18:30:00.000Z"
+        },
+        {
+          "id": "msg-c2",
+          "sender": "assistant",
+          "text": "```ts\nexport function slugify(s: string): string {\n  return s.toLowerCase().replace(/[^a-z0-9]+/g, \"-\").replace(/^-|-$/g, \"\").slice(0, 60) || \"file\";\n}\n```\nShort, predictable, and safe enough for export filenames.",
+          "created_at": "2026-07-15T18:30:40.000Z",
+          "thinking": "Keep it dependency-free and boring-on-purpose."
+        }
+      ]
+    },
+    {
+      "id": "conv-new-004",
+      "title": "A note on kindness",
+      "created_at": "2026-07-22T08:00:00.000Z",
+      "updated_at": "2026-07-22T08:05:00.000Z",
+      "messages": [
+        {
+          "id": "msg-d1",
+          "role": "user",
+          "content": "Remind me why soft product copy helps.",
+          "created_at": "2026-07-22T08:00:00.000Z"
+        },
+        {
+          "id": "msg-d2",
+          "role": "assistant",
+          "content": "Because people arrive tired. Calm words lower the stakes so they can finish the task without bracing for a scolding.",
+          "created_at": "2026-07-22T08:00:15.000Z",
+          "thinking_trace": "Tone-system reminder for the product itself."
+        }
+      ]
+    }
+  ]
+}
