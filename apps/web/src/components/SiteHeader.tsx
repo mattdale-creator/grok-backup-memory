@@ -9,6 +9,9 @@ export function SiteHeader() {
           <span>Grok Memory</span>
         </Link>
         <nav className="nav-links" aria-label="Primary">
+          <Link href="/demo" style={{ color: "var(--accent-strong)" }}>
+            Demo
+          </Link>
           <Link href="/how-it-works" className="hide-sm">
             How it works
           </Link>

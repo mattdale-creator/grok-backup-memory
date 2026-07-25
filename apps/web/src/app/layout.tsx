@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
+import { AppChrome } from "@/components/AppChrome";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,9 +44,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );

@@ -12,6 +12,26 @@ Not a fake Grok client. Not scraping. Not the Desktop LaunchAgent archive stack.
 
 ---
 
+## When you just want to *see* it (no coding)
+
+1. Double-click **Desktop → `Open Grok Memory Demo.command`**  
+   (or open `WAKE_UP_DEMO.md` on the Desktop / in this repo)
+2. Browser opens **http://localhost:3000/demo**
+3. Follow the numbered clicks: Import → Try demo sample → Library → iOS/Android shell previews
+
+**Direct local links**
+
+| Demo | URL |
+|------|-----|
+| Demo hub | http://localhost:3000/demo |
+| Import (interactive) | http://localhost:3000/import |
+| Library | http://localhost:3000/library |
+| iOS shell clone | http://localhost:3000/demo/ios |
+| Android shell clone | http://localhost:3000/demo/android |
+| Homepage | http://localhost:3000/ |
+
+---
+
 ## Quick start (web)
 
 ```bash

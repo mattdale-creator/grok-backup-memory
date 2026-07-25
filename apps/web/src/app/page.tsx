@@ -14,14 +14,14 @@ export default function HomePage() {
               in a private library that lives on your device.
             </p>
             <div className="hero-actions">
-              <Link href="/skill" className="btn btn-primary btn-lg">
-                Get the skill
+              <Link href="/demo" className="btn btn-primary btn-lg">
+                Start local demo
               </Link>
               <Link href="/import" className="btn btn-secondary btn-lg">
                 Open import
               </Link>
-              <Link href="/library" className="btn btn-ghost btn-lg">
-                Open library
+              <Link href="/skill" className="btn btn-ghost btn-lg">
+                Get the skill
               </Link>
             </div>
             <p className="hero-note">

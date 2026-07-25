@@ -34,3 +34,6 @@ apps/android/.idea/
 .idea/
 .vscode/
 *.swp
+
+.demo-server.log
+.demo-server.pid
