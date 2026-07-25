@@ -11,15 +11,12 @@ import type {
 export function normalizeRole(raw: unknown): MessageRole {
   if (typeof raw !== "string") return "unknown";
   const r = raw.toLowerCase().trim();
-  if (["user", "human", "sender_user", "from_user"].includes(r)) return "user";
+  if (["user", "human", "sender_user", "from_user", "prompter"].includes(r)) return "user";
   if (
-    ["assistant", "model", "grok", "bot", "ai", "sender_assistant", "from_assistant"].includes(
-      r,
-    )
-  ) {
+    ["assistant", "model", "grok", "bot", "ai", "sender_assistant", "from_assistant", "agent"].includes(r)
+  )
     return "assistant";
-  }
-  if (["system"].includes(r)) return "system";
+  if (r === "system") return "system";
   if (["tool", "function", "function_call"].includes(r)) return "tool";
   return "unknown";
 }
@@ -36,7 +33,6 @@ export function pickTimestamp(...candidates: unknown[]): string | undefined {
   for (const c of candidates) {
     if (c == null) continue;
     if (typeof c === "number") {
-      // seconds vs ms
       const ms = c < 1e12 ? c * 1000 : c;
       const d = new Date(ms);
       if (!Number.isNaN(d.getTime())) return d.toISOString();
@@ -60,12 +56,7 @@ function extractTextContent(raw: unknown): string {
         if (typeof part === "string") return part;
         if (part && typeof part === "object") {
           const o = part as Record<string, unknown>;
-          return (
-            pickString(o.text, o.content, o.value, o.message) ??
-            (typeof o.type === "string" && o.type === "text"
-              ? pickString(o.text, o.value) ?? ""
-              : "")
-          );
+          return pickString(o.text, o.content, o.value, o.message) ?? "";
         }
         return "";
       })
@@ -74,33 +65,22 @@ function extractTextContent(raw: unknown): string {
   }
   if (typeof raw === "object") {
     const o = raw as Record<string, unknown>;
-    return (
-      pickString(o.text, o.content, o.message, o.body, o.value, o.markdown) ??
-      ""
-    );
+    return pickString(o.text, o.content, o.message, o.body, o.value, o.markdown) ?? "";
   }
   return "";
 }
 
-function collectThoughts(
-  msg: Record<string, unknown>,
-  messageId: string,
-): ThoughtSegment[] {
+function collectThoughts(msg: Record<string, unknown>, messageId: string): ThoughtSegment[] {
   const thoughts: ThoughtSegment[] = [];
   let order = 0;
-
   const push = (text: string, source: string) => {
     const t = text.trim();
     if (!t) return;
-    thoughts.push({
-      id: `${messageId}-thought-${order}`,
-      text: t,
-      order: order++,
-      source,
-    });
+    // Dedupe identical thought text within message
+    if (thoughts.some((x) => x.text === t)) return;
+    thoughts.push({ id: `${messageId}-thought-${order}`, text: t, order: order++, source });
   };
 
-  // Common field names from Grok / xAI-style exports
   const direct = pickString(
     msg.thinking_trace,
     msg.thinking,
@@ -108,6 +88,7 @@ function collectThoughts(
     msg.reasoning,
     msg.chain_of_thought,
     msg.cot,
+    msg.reasoning_content,
   );
   if (direct) push(direct, "thinking_trace");
 
@@ -126,25 +107,19 @@ function collectThoughts(
     if (t) push(t, "agent_thinking_traces");
   }
 
-  // Nested under response / metadata
   const meta = msg.metadata;
   if (meta && typeof meta === "object") {
     const m = meta as Record<string, unknown>;
     const t = pickString(m.thinking_trace, m.thinking, m.reasoning);
     if (t) push(t, "metadata");
   }
-
   return thoughts;
 }
 
-function collectToolSteps(
-  msg: Record<string, unknown>,
-  messageId: string,
-): ToolStep[] {
+function collectToolSteps(msg: Record<string, unknown>, messageId: string): ToolStep[] {
   const steps: ToolStep[] = [];
   const raw = msg.steps ?? msg.tool_steps ?? msg.tool_calls ?? msg.tools;
   if (!Array.isArray(raw)) return steps;
-
   raw.forEach((item, i) => {
     if (!item || typeof item !== "object") return;
     const o = item as Record<string, unknown>;
@@ -160,13 +135,9 @@ function collectToolSteps(
   return steps;
 }
 
-function collectAttachments(
-  msg: Record<string, unknown>,
-  skipHeavyMedia: boolean,
-): AttachmentRef[] {
+function collectAttachments(msg: Record<string, unknown>, skipHeavyMedia: boolean): AttachmentRef[] {
   if (skipHeavyMedia) return [];
-  const raw =
-    msg.attachments ?? msg.assets ?? msg.files ?? msg.media ?? msg.images;
+  const raw = msg.attachments ?? msg.assets ?? msg.files ?? msg.media ?? msg.images;
   if (!Array.isArray(raw)) return [];
   return raw.map((item, i) => {
     if (typeof item === "string") {
@@ -193,51 +164,27 @@ export function normalizeMessage(
 ): Message | null {
   if (!raw || typeof raw !== "object") return null;
   const msg = raw as Record<string, unknown>;
+  const id = pickString(msg.id, msg.message_id, msg.uuid, msg.response_id) ?? `msg-${index}`;
+  const role = normalizeRole(msg.role ?? msg.sender ?? msg.author ?? msg.from ?? msg.speaker);
 
-  const id =
-    pickString(msg.id, msg.message_id, msg.uuid, msg.response_id) ??
-    `msg-${index}`;
-
-  const role = normalizeRole(
-    msg.role ?? msg.sender ?? msg.author ?? msg.from ?? msg.speaker,
-  );
-
-  // Content can live in many places
   let content = extractTextContent(
-    msg.content ??
-      msg.text ??
-      msg.message ??
-      msg.body ??
-      msg.response ??
-      msg.output ??
-      msg.markdown,
+    msg.content ?? msg.text ?? msg.message ?? msg.body ?? msg.response ?? msg.output ?? msg.markdown,
   );
-
-  // Some exports nest assistant content under response.message
   if (!content && msg.response && typeof msg.response === "object") {
     const r = msg.response as Record<string, unknown>;
     content = extractTextContent(r.content ?? r.text ?? r.message);
   }
 
   const thoughts = collectThoughts(msg, id);
-  // Also pull thoughts from nested response
   if (msg.response && typeof msg.response === "object") {
-    const nested = collectThoughts(msg.response as Record<string, unknown>, id);
-    for (const t of nested) {
+    for (const t of collectThoughts(msg.response as Record<string, unknown>, id)) {
       if (!thoughts.some((x) => x.text === t.text)) thoughts.push(t);
     }
   }
 
   const toolSteps = collectToolSteps(msg, id);
   const attachments = collectAttachments(msg, skipHeavyMedia);
-  const createdAt = pickTimestamp(
-    msg.created_at,
-    msg.createdAt,
-    msg.timestamp,
-    msg.time,
-    msg.date,
-  );
-
+  const createdAt = pickTimestamp(msg.created_at, msg.createdAt, msg.timestamp, msg.time, msg.date);
   const contentHashValue = contentHash(
     [id, role, content, thoughts.map((t) => t.text).join("\n")].join("|"),
   );
@@ -261,34 +208,18 @@ export function normalizeConversation(
 ): Conversation | null {
   if (!raw || typeof raw !== "object") return null;
   const c = raw as Record<string, unknown>;
-
   const id =
-    pickString(c.id, c.conversation_id, c.chat_id, c.thread_id, c.uuid) ??
-    `conv-${index}`;
-
+    pickString(c.id, c.conversation_id, c.chat_id, c.thread_id, c.uuid, c.cid) ?? `conv-${index}`;
   const title =
-    pickString(c.title, c.name, c.subject, c.summary, c.preview) ??
-    "Untitled conversation";
+    pickString(c.title, c.name, c.subject, c.summary, c.preview, c.topic) ?? "Untitled conversation";
 
-  // Messages under many possible keys
   let messageRaw: unknown[] = [];
-  const candidates = [
-    c.messages,
-    c.responses,
-    c.turns,
-    c.items,
-    c.conversation,
-    c.chat,
-    c.history,
-  ];
-  for (const cand of candidates) {
+  for (const cand of [c.messages, c.responses, c.turns, c.items, c.conversation, c.chat, c.history, c.entries]) {
     if (Array.isArray(cand) && cand.length) {
       messageRaw = cand;
       break;
     }
   }
-
-  // Some exports: conversation.messages nested
   if (!messageRaw.length && c.conversation && typeof c.conversation === "object") {
     const nested = c.conversation as Record<string, unknown>;
     if (Array.isArray(nested.messages)) messageRaw = nested.messages;
@@ -297,7 +228,6 @@ export function normalizeConversation(
 
   const messages: Message[] = [];
   messageRaw.forEach((m, i) => {
-    // Some formats pair user/assistant under a turn object
     if (m && typeof m === "object") {
       const turn = m as Record<string, unknown>;
       if (turn.user || turn.human || turn.prompt) {
@@ -334,13 +264,7 @@ export function normalizeConversation(
   });
 
   const createdAt = pickTimestamp(c.created_at, c.createdAt, c.started_at, c.timestamp);
-  const updatedAt = pickTimestamp(
-    c.updated_at,
-    c.updatedAt,
-    c.modified_at,
-    c.last_message_at,
-  );
-
+  const updatedAt = pickTimestamp(c.updated_at, c.updatedAt, c.modified_at, c.last_message_at);
   const thoughtCount = messages.reduce((n, m) => n + m.thoughts.length, 0);
   const hash = conversationHash({ id, title, messages });
 

@@ -46,14 +46,16 @@ export async function loadConversations(): Promise<Conversation[]> {
   });
 }
 
-export async function saveConversations(
-  conversations: Conversation[],
-): Promise<void> {
+/** Single atomic transaction for puts + orphan deletes (merge from redo). */
+export async function saveConversations(conversations: Conversation[]): Promise<void> {
   const db = await getDb();
-  const tx = db.transaction("conversations", "readwrite");
+  const keep = new Set(conversations.map((c) => c.id));
+  const tx = db.transaction(["conversations", "meta"], "readwrite");
+  const store = tx.objectStore("conversations");
+  const existingKeys = await store.getAllKeys();
   await Promise.all([
-    ...conversations.map((c) => tx.store.put(c)),
-    tx.done,
+    ...conversations.map((c) => store.put(c)),
+    ...existingKeys.filter((k) => !keep.has(String(k))).map((k) => store.delete(k)),
   ]);
   const meta: LibraryMeta = {
     version: 1,
@@ -61,24 +63,8 @@ export async function saveConversations(
     lastImportAt: new Date().toISOString(),
     conversationCount: conversations.length,
   };
-  // Replace library entirely with merged set: clear removed? keep all keys from merge
-  // For incremental: put merged list; optionally delete orphans not in merge
-  const existingKeys = await db.getAllKeys("conversations");
-  const keep = new Set(conversations.map((c) => c.id));
-  const delTx = db.transaction("conversations", "readwrite");
-  await Promise.all([
-    ...existingKeys
-      .filter((k) => !keep.has(String(k)))
-      .map((k) => delTx.store.delete(k)),
-    delTx.done,
-  ]);
-  // Re-put to ensure latest (in case delete path raced — safe)
-  const putTx = db.transaction("conversations", "readwrite");
-  await Promise.all([
-    ...conversations.map((c) => putTx.store.put(c)),
-    putTx.done,
-  ]);
-  await db.put("meta", meta, "library");
+  await tx.objectStore("meta").put(meta, "library");
+  await tx.done;
 }
 
 export async function getLibraryMeta(): Promise<LibraryMeta | undefined> {
@@ -88,6 +74,10 @@ export async function getLibraryMeta(): Promise<LibraryMeta | undefined> {
 
 export async function clearLibrary(): Promise<void> {
   const db = await getDb();
-  await db.clear("conversations");
-  await db.delete("meta", "library");
+  const tx = db.transaction(["conversations", "meta"], "readwrite");
+  await Promise.all([
+    tx.objectStore("conversations").clear(),
+    tx.objectStore("meta").delete("library"),
+    tx.done,
+  ]);
 }

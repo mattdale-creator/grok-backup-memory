@@ -13,6 +13,7 @@
     "build:core": "npm run build -w @grok-memory/core",
     "build:web": "npm run build -w @grok-memory/web",
     "test": "npm run test -w @grok-memory/core",
+    "verify": "node scripts/verify-demo.mjs",
     "lint": "npm run lint -w @grok-memory/web",
     "start": "npm run start -w @grok-memory/web"
   },

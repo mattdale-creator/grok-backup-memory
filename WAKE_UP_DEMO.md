@@ -31,9 +31,9 @@ cd /Users/hattr/grok-backup-memory && ./scripts/open-demo.command
 | # | Open this | What to do |
 |---|-----------|------------|
 | 1 | [http://localhost:3000/demo](http://localhost:3000/demo) | Demo hub — read the short path |
-| 2 | [http://localhost:3000/import](http://localhost:3000/import) | Click **Try demo sample** |
-| 3 | [http://localhost:3000/library](http://localhost:3000/library) | Open a chat · expand **Thoughts** · try **MD / HTML / PDF / EPUB** |
-| 4 | Import again | Click **Try demo sample** again → toast like **Skipped 3** (dedupe) |
+| 2 | [http://localhost:3000/import?demo=1](http://localhost:3000/import?demo=1) | **Auto-loads** sample (no extra clicks) → library |
+| 3 | Library (opens after import) | Expand **Thoughts** · try **MD / HTML / PDF / EPUB** |
+| 4 | [http://localhost:3000/import?demo=week2](http://localhost:3000/import?demo=week2) | Auto week-2 snapshot → toast **Added / Updated / Skipped** |
 | 5 | [http://localhost:3000/demo/ios](http://localhost:3000/demo/ios) | Phone-frame iOS shell (real app inside) |
 | 6 | [http://localhost:3000/demo/android](http://localhost:3000/demo/android) | Phone-frame Android shell |
 | 7 | [http://localhost:3000/](http://localhost:3000/) | Marketing homepage |

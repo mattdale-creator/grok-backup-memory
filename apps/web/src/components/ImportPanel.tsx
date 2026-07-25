@@ -1,107 +1,82 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  dedupeMerge,
-  formatDedupeToast,
-  parseGrokExport,
-} from "@grok-memory/core";
-import { loadConversations, saveConversations } from "@/lib/storage";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { formatDedupeToast } from "@grok-memory/core";
+import { useLibrary } from "@/lib/library-store";
 
-type Props = {
-  variant?: "page" | "compact";
-};
+type Props = { variant?: "page" | "compact" };
 
 export function ImportPanel({ variant = "page" }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { importFile, importProgress } = useLibrary();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [label, setLabel] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [skipHeavyMedia, setSkipHeavyMedia] = useState(true);
+  const autoRan = useRef(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(null), 4500);
   };
 
-  const importBlob = useCallback(
-    async (file: File | Blob, nameHint = "export.json") => {
+  const runImport = useCallback(
+    async (file: File | Blob, nameHint?: string) => {
       setBusy(true);
       setError(null);
-      setProgress(0.02);
-      setLabel("Reading…");
-
       try {
-        const existing = await loadConversations();
-        const asFile =
-          file instanceof File
-            ? file
-            : new File([file], nameHint, { type: "application/json" });
-        const parsed = await parseGrokExport(asFile, {
-          skipHeavyMedia,
-          onProgress: (p, l) => {
-            setProgress(p);
-            if (l) setLabel(l);
-          },
-        });
-
-        if (!parsed.conversations.length) {
-          setError(
-            parsed.warnings[0] ||
-              "No conversations found in that file. Try the JSON or ZIP from Grok Settings → Data Controls.",
-          );
-          setBusy(false);
-          return;
-        }
-
-        const merged = dedupeMerge(existing, parsed.conversations);
-        await saveConversations(merged.conversations);
-        const msg = formatDedupeToast(merged);
+        const stats = await importFile(file, nameHint, skipHeavyMedia);
+        const msg = formatDedupeToast(stats);
         showToast(msg);
-        setLabel(msg);
-        setProgress(1);
-
-        window.setTimeout(() => {
-          router.push("/library");
-        }, 700);
+        window.setTimeout(() => router.push("/library"), 600);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Import failed. Try another file.");
       } finally {
         setBusy(false);
       }
     },
-    [router, skipHeavyMedia],
+    [importFile, router, skipHeavyMedia],
   );
 
   const handleFiles = useCallback(
     async (files: FileList | File[] | null) => {
-      if (!files || !files.length) return;
-      await importBlob(files[0]);
+      if (!files?.length) return;
+      await runImport(files[0]);
     },
-    [importBlob],
+    [runImport],
   );
 
-  const loadSample = useCallback(async () => {
-    try {
-      const res = await fetch("/demo/sample-export.json");
-      if (!res.ok) throw new Error("Sample file missing");
-      const blob = await res.blob();
-      await importBlob(blob, "sample-export.json");
-    } catch {
-      setError("Could not load the demo sample. Use Choose ZIP or JSON instead.");
-    }
-  }, [importBlob]);
+  const loadDemo = useCallback(
+    async (which: "sample" | "week2" | "nested" = "sample") => {
+      const path =
+        which === "week2"
+          ? "/demo/sample-export-week2.json"
+          : which === "nested"
+            ? "/demo/nested-export.json"
+            : "/demo/sample-export.json";
+      const name = path.split("/").pop()!;
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Demo file missing");
+      await runImport(await res.blob(), name);
+    },
+    [runImport],
+  );
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    void handleFiles(e.dataTransfer.files);
-  };
+  // IMPROVEMENT: deep-link demos — /import?demo=1 | demo=week2 | demo=nested
+  useEffect(() => {
+    if (autoRan.current) return;
+    const demo = searchParams.get("demo");
+    if (!demo) return;
+    autoRan.current = true;
+    const which = demo === "week2" || demo === "2" ? "week2" : demo === "nested" ? "nested" : "sample";
+    void loadDemo(which).catch((e) =>
+      setError(e instanceof Error ? e.message : "Auto-demo failed"),
+    );
+  }, [searchParams, loadDemo]);
 
   return (
     <>
@@ -112,7 +87,11 @@ export function ImportPanel({ variant = "page" }: Props) {
           setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          void handleFiles(e.dataTransfer.files);
+        }}
       >
         <div>
           <p className="eyebrow" style={{ justifyContent: "center" }}>
@@ -120,8 +99,8 @@ export function ImportPanel({ variant = "page" }: Props) {
           </p>
           <h1>{variant === "page" ? "Import your Grok export" : "Import"}</h1>
           <p>
-            Drop a ZIP or JSON from official Grok data export. We parse it here
-            in your browser—nothing is uploaded to our servers in v1.
+            Drop a ZIP or JSON from official Grok data export. Parsed in your
+            browser—nothing uploaded to our servers in v1.
           </p>
           <div style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap", justifyContent: "center" }}>
             <button
@@ -136,9 +115,17 @@ export function ImportPanel({ variant = "page" }: Props) {
               type="button"
               className="btn btn-secondary btn-lg"
               disabled={busy}
-              onClick={() => void loadSample()}
+              onClick={() => void loadDemo("sample")}
             >
               Try demo sample
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-lg"
+              disabled={busy}
+              onClick={() => void loadDemo("week2")}
+            >
+              Demo week-2 dedupe
             </button>
           </div>
           <input
@@ -156,12 +143,18 @@ export function ImportPanel({ variant = "page" }: Props) {
             />
             Chats + thoughts only (skip heavy media)
           </label>
-          {busy && (
+          {(busy || importProgress) && (
             <>
               <div className="progress-bar" aria-hidden>
-                <span style={{ width: `${Math.round(progress * 100)}%` }} />
+                <span
+                  style={{
+                    width: `${Math.round((importProgress?.progress ?? 0.1) * 100)}%`,
+                  }}
+                />
               </div>
-              <p style={{ marginTop: "0.75rem", color: "var(--fg-muted)" }}>{label}</p>
+              <p style={{ marginTop: "0.75rem", color: "var(--fg-muted)" }}>
+                {importProgress?.label ?? "Working…"}
+              </p>
             </>
           )}
           {error && (
@@ -170,12 +163,17 @@ export function ImportPanel({ variant = "page" }: Props) {
             </p>
           )}
           <p className="hero-note" style={{ marginTop: "1.25rem" }}>
-            Official path: Grok Settings → Data Controls → export, then import here.
-            Demo uses a synthetic fixture—no private data required.
+            Auto-demo links:{" "}
+            <code className="phrase-inline">/import?demo=1</code> ·{" "}
+            <code className="phrase-inline">/import?demo=week2</code>
           </p>
         </div>
       </div>
-      {toast && <div className="toast" role="status">{toast}</div>}
+      {toast && (
+        <div className="toast" role="status">
+          {toast}
+        </div>
+      )}
     </>
   );
 }

@@ -1,0 +1,27 @@
+{
+  "meta": { "product": "grok", "version": 2 },
+  "payload": {
+    "user_conversations": [
+      {
+        "cid": "nested-001",
+        "topic": "Nested shape sample",
+        "started_at": "2026-07-01T10:00:00.000Z",
+        "entries": [
+          {
+            "id": "n1",
+            "author": "human",
+            "body": "Can you parse nested export shapes?",
+            "created_at": "2026-07-01T10:00:00.000Z"
+          },
+          {
+            "id": "n2",
+            "author": "agent",
+            "body": "Yes — deep discovery finds conversations under payload.user_conversations.",
+            "created_at": "2026-07-01T10:00:10.000Z",
+            "reasoning_content": "Use recursive key walk with preferred keys and heuristics."
+          }
+        ]
+      }
+    ]
+  }
+}
